@@ -1,5 +1,5 @@
 import {queries} from '@testing-library/dom'
-import {commands} from '../'
+import {commands, baseCommandImpl} from '../'
 
 test('exports expected commands', () => {
   expect(commands).toMatchObject(expect.any(Array))
@@ -15,3 +15,6 @@ test('exports expected commands', () => {
     }),
   )
 })
+
+// baseCommandImpl
+test('baseCommandImpl should forward', () => {})

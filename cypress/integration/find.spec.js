@@ -87,6 +87,24 @@ describe('find* dom-testing-library commands', () => {
 
   /* Test the behaviour around these queries */
 
+  it('findByText should find element if given multiple elements and match is in first given element ', () => {
+    cy.get('.multiple-matches')
+      .findByText('Text 1')
+      .should('exist')
+  })
+
+  it.only('findByText should find element if given multiple elements and match is in second given element ', () => {
+    cy.get('.multiple-matches')
+      .findByText('Text 2')
+      .should('exist')
+  })
+
+  it('findAllByText should handle multiple parent elements and return multiple results', () => {
+    cy.get('.multiple-matches')
+      .findAllByText(/Text \d/)
+      .should('have.length', 2)
+  })
+
   it('findByText should handle non-existence', () => {
     cy.findByText('Does Not Exist').should('not.exist')
   })

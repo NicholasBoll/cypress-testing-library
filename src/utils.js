@@ -1,18 +1,20 @@
-function getFirstElement(jqueryOrElement) {
+function getElements(jqueryOrElement) {
   if (Cypress.dom.isJquery(jqueryOrElement)) {
-    return jqueryOrElement.get(0)
+    return jqueryOrElement.toArray()
+  } else if (Cypress._.isArray(jqueryOrElement)) {
+    return jqueryOrElement
   }
-  return jqueryOrElement
+  return [jqueryOrElement]
 }
 
-function getContainer(container) {
+function getContainers(container) {
   const withinContainer = cy.state('withinSubject')
   if (withinContainer) {
-    return getFirstElement(withinContainer)
+    return withinContainer.toArray()
   }
-  return getFirstElement(container)
+  return getElements(container)
 }
 
-export {getFirstElement, getContainer}
+export {getElements, getContainers}
 
 /* globals Cypress, cy */

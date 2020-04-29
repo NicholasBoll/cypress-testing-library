@@ -1,5 +1,5 @@
 import {configure as configureDTL, queries} from '@testing-library/dom'
-import {getContainer} from './utils'
+import {getContainers} from './utils'
 
 function configure({fallbackRetryWithoutPreviousSubject, ...config}) {
   return configureDTL(config)
@@ -9,6 +9,7 @@ const queryNames = Object.keys(queries)
 
 const deprecatedRegex = /^(get|query)/
 const findRegex = /^find/
+const allRegex = /All/
 
 const deprecatedQueryNames = queryNames.filter(q => deprecatedRegex.test(q))
 const findQueryNames = queryNames.filter(q => findRegex.test(q))
@@ -31,6 +32,32 @@ const findCommands = findQueryNames.map(queryName => {
   return createCommand(queryName, queryName.replace(findRegex, 'get'))
 })
 
+const baseCommandImpl = (implementationName, args) => input => {
+  const queryImpl = queries[implementationName]
+  // We need to run against all containers and capture either a result or an error
+  const results = getContainers(input).map(container => {
+    try {
+      return queryImpl(container, ...args)
+    } catch (e) {
+      return e
+    }
+  })
+
+  const values = results.filter(r => !r.stack)
+  const errors = results.filter(r => r.stack)
+
+  if (allRegex.test(implementationName)) {
+    return values
+  } else {
+    if (values.length === 0) {
+      return values[0]
+    }
+  }
+
+  console.log('results', results, values, errors)
+  return results
+}
+
 function createCommand(queryName, implementationName) {
   return {
     name: queryName,
@@ -44,11 +71,7 @@ function createCommand(queryName, implementationName) {
       const options =
         typeof lastArg === 'object' ? {...defaults, ...lastArg} : defaults
 
-      const queryImpl = queries[implementationName]
-      const baseCommandImpl = container => {
-        return queryImpl(getContainer(container), ...args)
-      }
-      const commandImpl = container => baseCommandImpl(container)
+      const commandImpl = baseCommandImpl(implementationName, args)
 
       const inputArr = args.filter(filterInputs)
 
@@ -60,7 +83,7 @@ function createCommand(queryName, implementationName) {
         // TODO: Would be good to completely separate out the types of input into their own properties
         input: inputArr,
         Selector: getSelector(),
-        'Applied To': getContainer(
+        'Applied To': getContainers(
           options.container || prevSubject || win.document,
         ),
       }
@@ -183,7 +206,7 @@ function queryArgument(args) {
 
 const commands = [...findCommands, ...deprecatedCommands]
 
-export {commands, configure}
+export {commands, configure, baseCommandImpl}
 
 /* eslint no-new-func:0, complexity:0 */
 /* globals Cypress, cy */
